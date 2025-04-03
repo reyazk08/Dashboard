@@ -30,16 +30,18 @@
         .container {
             padding: 2rem;
         }
-        .monitoring-section {
-            margin-top: 2rem;
-            padding: 1rem;
+        .filter-section {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .filter-section input {
+            padding: 0.5rem;
             border: 1px solid #444;
             border-radius: 5px;
             background-color: #1e1e1e;
-        }
-        .monitoring-section h2 {
-            margin-top: 0;
-            color: #00bcd4;
+            color: #ffffff;
         }
         table {
             width: 100%;
@@ -49,11 +51,12 @@
         table th, table td {
             border: 1px solid #444;
             padding: 0.5rem;
-            text-align: center; /* Center-align all table data */
+            text-align: center;
         }
         table th {
             background-color: #333;
             color: #00bcd4;
+            cursor: pointer; /* Add pointer cursor for sortable columns */
         }
         table tr:nth-child(even) {
             background-color: #2a2a2a;
@@ -75,21 +78,27 @@
         <h1>Historical Analysis</h1>
         <p id="no-historical-data-message">Fetching historical data...</p>
 
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <label for="filter-input">Filter by Symbol or Side:</label>
+            <input type="text" id="filter-input" placeholder="Enter symbol or side (e.g., BTC, short)">
+        </div>
+
         <!-- Table for Historical Trades -->
         <table id="historical-trades-table" style="display: none;">
             <thead>
                 <tr>
-                    <th>Symbol</th>
-                    <th>Side</th>
-                    <th>Entry Date</th>
-                    <th>Entry Time</th>
-                    <th>Exit Date</th>
-                    <th>Exit Time</th>
-                    <th>Entry Price</th>
-                    <th>Exit Price</th>
-                    <th>Profit/Loss</th>
-                    <th>Trade Duration</th>
-                    <th>Exit Reason</th>
+                    <th data-sort="symbol">Symbol</th>
+                    <th data-sort="side">Side</th>
+                    <th data-sort="entry_date">Entry Date</th>
+                    <th data-sort="entry_time">Entry Time</th>
+                    <th data-sort="exit_date">Exit Date</th>
+                    <th data-sort="exit_time">Exit Time</th>
+                    <th data-sort="entry_price">Entry Price</th>
+                    <th data-sort="exit_price">Exit Price</th>
+                    <th data-sort="profit_loss">Profit/Loss</th>
+                    <th data-sort="trade_duration">Trade Duration</th>
+                    <th data-sort="exit_reason">Exit Reason</th>
                 </tr>
             </thead>
             <tbody id="historical-trades-body">
@@ -102,17 +111,70 @@
         // Replace with your Raspberry Pi's IP address
         const historicalApiUrl = 'http://192.168.1.9:5000/api/historical-trades';
 
-        // Helper function to format numbers to 2 decimal places
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+
         function formatNumber(value) {
             return parseFloat(value).toFixed(2);
         }
 
-        // Helper function to format trade duration (in seconds) into hours:minutes
         function formatDuration(duration) {
             const minutes = Math.floor(duration / 60);
             const hours = Math.floor(minutes / 60);
             return `${hours}h ${minutes % 60}m`;
         }
+
+        function sortTable(column) {
+            const tableBody = document.getElementById('historical-trades-body');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortDirection = 'asc';
+            }
+            currentSortColumn = column;
+
+            rows.sort((a, b) => {
+                const aValue = a.querySelector(`td:nth-child(${column})`).textContent.trim();
+                const bValue = b.querySelector(`td:nth-child(${column})`).textContent.trim();
+
+                if (!isNaN(aValue) && !isNaN(bValue)) {
+                    return currentSortDirection === 'asc'
+                        ? parseFloat(aValue) - parseFloat(bValue)
+                        : parseFloat(bValue) - parseFloat(aValue);
+                } else {
+                    return currentSortDirection === 'asc'
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
+                }
+            });
+
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+
+        function filterTable() {
+            const filterValue = document.getElementById('filter-input').value.toLowerCase();
+            const tableBody = document.getElementById('historical-trades-body');
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const symbol = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                const side = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+
+                if (symbol.includes(filterValue) || side.includes(filterValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        document.querySelectorAll('th[data-sort]').forEach((header, index) => {
+            header.addEventListener('click', () => sortTable(index + 1));
+        });
+
+        document.getElementById('filter-input').addEventListener('input', filterTable);
 
         async function fetchHistoricalTrades() {
             try {
@@ -123,7 +185,6 @@
                 const tableBody = document.getElementById('historical-trades-body');
                 const noDataMessage = document.getElementById('no-historical-data-message');
 
-                // Clear existing table rows
                 tableBody.innerHTML = '';
 
                 if (data.length === 0) {
@@ -133,7 +194,6 @@
                     noDataMessage.style.display = 'none';
                     table.style.display = 'table';
 
-                    // Populate table with formatted data
                     data.forEach(trade => {
                         const entryDateTime = new Date(parseFloat(trade.entry_time) * 1000);
                         const exitDateTime = new Date(parseFloat(trade.exit_time) * 1000);
@@ -161,7 +221,6 @@
             }
         }
 
-        // Fetch historical trades on page load
         fetchHistoricalTrades();
     </script>
 </body>
