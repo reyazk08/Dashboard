@@ -88,8 +88,6 @@
                     <th>Exit Price</th>
                     <th>Profit/Loss</th>
                     <th>Trade Duration</th>
-                    <th>Initial SL</th>
-                    <th>Final SL</th>
                     <th>Exit Reason</th>
                 </tr>
             </thead>
@@ -102,41 +100,57 @@
     <script>
         // Replace with your Raspberry Pi's IP address
         const historicalApiUrl = 'http://192.168.1.9:5000/api/historical-trades';
-
+    
+        // Helper function to format timestamps into human-readable date-time
+        function formatTimestamp(timestamp) {
+            const date = new Date(parseFloat(timestamp) * 1000);
+            return date.toLocaleString(); // Converts to a readable date-time format
+        }
+    
+        // Helper function to format numbers to 2 decimal places
+        function formatNumber(value) {
+            return parseFloat(value).toFixed(2);
+        }
+    
+        // Helper function to format trade duration (in seconds) into hours:minutes
+        function formatDuration(duration) {
+            const minutes = Math.floor(duration / 60);
+            const hours = Math.floor(minutes / 60);
+            return `${hours}h ${minutes % 60}m`;
+        }
+    
         async function fetchHistoricalTrades() {
             try {
                 const response = await fetch(historicalApiUrl);
                 const data = await response.json();
-
+    
                 const table = document.getElementById('historical-trades-table');
                 const tableBody = document.getElementById('historical-trades-body');
                 const noDataMessage = document.getElementById('no-historical-data-message');
-
+    
                 // Clear existing table rows
                 tableBody.innerHTML = '';
-
+    
                 if (data.length === 0) {
                     noDataMessage.textContent = 'No historical trades available.';
                     table.style.display = 'none';
                 } else {
                     noDataMessage.style.display = 'none';
                     table.style.display = 'table';
-
-                    // Populate table with data
+    
+                    // Populate table with formatted data
                     data.forEach(trade => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${trade.timestamp}</td>
+                            <td>${formatTimestamp(trade.timestamp)}</td>
                             <td>${trade.symbol}</td>
                             <td>${trade.side}</td>
-                            <td>${trade.entry_time}</td>
-                            <td>${trade.exit_time}</td>
-                            <td>${trade.entry_price}</td>
-                            <td>${trade.exit_price}</td>
-                            <td>${trade.profit_loss}</td>
-                            <td>${trade.trade_duration}</td>
-                            <td>${trade.initial_sl}</td>
-                            <td>${trade.final_sl}</td>
+                            <td>${formatTimestamp(trade.entry_time)}</td>
+                            <td>${formatTimestamp(trade.exit_time)}</td>
+                            <td>${formatNumber(trade.entry_price)}</td>
+                            <td>${formatNumber(trade.exit_price)}</td>
+                            <td>${formatNumber(trade.profit_loss)}</td>
+                            <td>${formatDuration(trade.trade_duration)}</td>
                             <td>${trade.exit_reason}</td>
                         `;
                         tableBody.appendChild(row);
@@ -147,7 +161,7 @@
                 document.getElementById('no-historical-data-message').textContent = 'Error fetching data. Please try again later.';
             }
         }
-
+    
         // Fetch historical trades on page load
         fetchHistoricalTrades();
     </script>
