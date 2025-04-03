@@ -95,20 +95,15 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for position in positions %}
                     <tr>
-                        <td>BTC/USD</td>
-                        <td>0.5</td>
-                        <td>45000</td>
-                        <td>46000</td>
-                        <td>+500</td>
+                        <td>{{ position.symbol }}</td>
+                        <td>{{ position.size }}</td>
+                        <td>{{ position.entry_price }}</td>
+                        <td>{{ position.current_price }}</td>
+                        <td>{{ position.pnl }}</td>
                     </tr>
-                    <tr>
-                        <td>ETH/USD</td>
-                        <td>1.0</td>
-                        <td>3000</td>
-                        <td>3100</td>
-                        <td>+100</td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
