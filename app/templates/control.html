@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Control Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'base.html' %}
+    <div class="container">
+        <h1>Bot Control Center</h1>
+        <div id="bot-status">
+            <h2>Status: <span id="status-indicator">Running</span></h2>
+        </div>
+        <div id="controls">
+            <button id="start-bot">Start Bot</button>
+            <button id="stop-bot">Stop Bot</button>
+            <button id="restart-bot">Restart Bot</button>
+        </div>
+        <div id="log-output">
+            <h3>Log Output</h3>
+            <pre id="logs"></pre>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
