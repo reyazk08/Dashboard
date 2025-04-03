@@ -21,6 +21,9 @@ def get_positions():
         {"symbol": "XRP/USD", "size": 2000, "entry_price": 0.5, "current_price": 0.65, "pnl": "+300"},
     ]
     return jsonify(positions)
+@app.route('/historical')
+def historical():
+    return render_template('historical.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -81,10 +81,10 @@
         <!-- Real-Time Monitoring Section -->
         <div class="monitoring-section">
             <h2>Real-Time Monitoring</h2>
-            <p>Live data from your trading bot will appear here.</p>
+            <p id="no-data-message">Fetching live data...</p>
         
             <!-- Table for Live Positions -->
-            <table>
+            <table id="positions-table" style="display: none;">
                 <thead>
                     <tr>
                         <th>Symbol</th>
@@ -94,19 +94,61 @@
                         <th>Floating P/L</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for position in positions %}
-                    <tr>
-                        <td>{{ position.symbol }}</td>
-                        <td>{{ position.size }}</td>
-                        <td>{{ position.entry_price }}</td>
-                        <td>{{ position.current_price }}</td>
-                        <td>{{ position.pnl }}</td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="positions-body">
+                    <!-- Data will be dynamically inserted here -->
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        // Replace with your Raspberry Pi's IP address
+        const apiUrl = 'http://192.168.1.9:5000/api/active-trades';
+
+        async function fetchPositions() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                const table = document.getElementById('positions-table');
+                const tableBody = document.getElementById('positions-body');
+                const noDataMessage = document.getElementById('no-data-message');
+
+                // Clear existing table rows
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    noDataMessage.textContent = 'No active trades at the moment.';
+                    table.style.display = 'none';
+                } else {
+                    noDataMessage.style.display = 'none';
+                    table.style.display = 'table';
+
+                    // Populate table with data
+                    data.forEach(position => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${position.symbol}</td>
+                            <td>${position.size}</td>
+                            <td>${position.entry_price}</td>
+                            <td>${position.current_price}</td>
+                            <td>${position.pnl}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching positions:', error);
+                document.getElementById('no-data-message').textContent = 'Error fetching data. Please try again later.';
+            }
+        }
+
+        // Fetch positions on page load
+        fetchPositions();
+
+        // Optionally, refresh data every 10 seconds
+        setInterval(fetchPositions, 10000);
+    </script>
+    
 </body>
 </html>

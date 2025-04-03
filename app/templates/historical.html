@@ -4,21 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historical Analysis</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .monitoring-section {
+            margin-top: 2rem;
+            padding: 1rem;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #1e1e1e;
+        }
+        .monitoring-section h2 {
+            margin-top: 0;
+            color: #00bcd4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        table th, table td {
+            border: 1px solid #444;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        table th {
+            background-color: #333;
+            color: #00bcd4;
+        }
+        table tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+        table tr:nth-child(odd) {
+            background-color: #1e1e1e;
+        }
+    </style>
 </head>
 <body>
-    {% include 'base.html' %}
+    <nav>
+        <div>Trading Bot Dashboard</div>
+        <div>
+            <a href="/">Home</a>
+            <a href="/historical">Historical Analysis</a>
+        </div>
+    </nav>
     <div class="container">
         <h1>Historical Analysis</h1>
-        <div id="historical-data">
-            <!-- Historical data visualization will be rendered here -->
-        </div>
-        <div class="controls">
-            <label for="date-range">Select Date Range:</label>
-            <input type="text" id="date-range" placeholder="YYYY-MM-DD to YYYY-MM-DD">
-            <button id="fetch-data">Fetch Data</button>
-        </div>
+        <p id="no-historical-data-message">Fetching historical data...</p>
+
+        <!-- Table for Historical Trades -->
+        <table id="historical-trades-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Entry Price</th>
+                    <th>Exit Price</th>
+                    <th>Profit/Loss</th>
+                    <th>Trade Duration</th>
+                    <th>Initial SL</th>
+                    <th>Final SL</th>
+                    <th>Exit Reason</th>
+                </tr>
+            </thead>
+            <tbody id="historical-trades-body">
+                <!-- Data will be dynamically inserted here -->
+            </tbody>
+        </table>
     </div>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        // Replace with your Raspberry Pi's IP address
+        const historicalApiUrl = 'http://192.168.1.9:5000/api/historical-trades';
+
+        async function fetchHistoricalTrades() {
+            try {
+                const response = await fetch(historicalApiUrl);
+                const data = await response.json();
+
+                const table = document.getElementById('historical-trades-table');
+                const tableBody = document.getElementById('historical-trades-body');
+                const noDataMessage = document.getElementById('no-historical-data-message');
+
+                // Clear existing table rows
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    noDataMessage.textContent = 'No historical trades available.';
+                    table.style.display = 'none';
+                } else {
+                    noDataMessage.style.display = 'none';
+                    table.style.display = 'table';
+
+                    // Populate table with data
+                    data.forEach(trade => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${trade.timestamp}</td>
+                            <td>${trade.symbol}</td>
+                            <td>${trade.side}</td>
+                            <td>${trade.entry_time}</td>
+                            <td>${trade.exit_time}</td>
+                            <td>${trade.entry_price}</td>
+                            <td>${trade.exit_price}</td>
+                            <td>${trade.profit_loss}</td>
+                            <td>${trade.trade_duration}</td>
+                            <td>${trade.initial_sl}</td>
+                            <td>${trade.final_sl}</td>
+                            <td>${trade.exit_reason}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching historical trades:', error);
+                document.getElementById('no-historical-data-message').textContent = 'Error fetching data. Please try again later.';
+            }
+        }
+
+        // Fetch historical trades on page load
+        fetchHistoricalTrades();
+    </script>
 </body>
 </html>
