@@ -8,6 +8,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historical Analysis</title>
     <style>
+        .skeleton {
+            background-color: #2a2a2a;
+            border-radius: 4px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-chart {
+            height: 250px;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(18, 18, 18, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 188, 212, 0.3);
+            border-radius: 50%;
+            border-top-color: #00bcd4;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #ffffff;
+            font-size: 1.2rem;
+        }        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -432,7 +481,15 @@
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            fetchHistoricalTrades();
+            
+            // Show loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            
+            // Load data
+            fetchHistoricalTrades().finally(() => {
+                loadingOverlay.style.display = 'none';
+            });
         });
 
         function setupEventListeners() {
@@ -1213,5 +1270,9 @@
             }
         }
     </script>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading trading data...</div>
+    </div>    
 </body>
 </html>
