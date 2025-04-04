@@ -1,80 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historical Analysis</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #121212;
             color: #ffffff;
         }
         nav {
-            background-color: #333;
+            background-color: #1a1a1a;
             color: white;
             padding: 1rem;
             display: flex;
             justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         nav a {
-            color: white;
+            color: #ffffff;
             text-decoration: none;
             margin: 0 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
         nav a:hover {
-            text-decoration: underline;
+            background-color: #333;
         }
         .container {
             padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         .filter-section {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
-        .filter-section input {
-            padding: 0.5rem;
+        .filter-section label {
+            font-weight: 600;
+            color: #00bcd4;
+        }
+        .filter-section input, .filter-section select {
+            padding: 0.6rem;
             border: 1px solid #444;
             border-radius: 5px;
-            background-color: #1e1e1e;
+            background-color: #2a2a2a;
             color: #ffffff;
+            min-width: 150px;
         }
         .filter-section button {
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.2rem;
             border: none;
             border-radius: 5px;
             background-color: #00bcd4;
             color: #ffffff;
             cursor: pointer;
             font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
         }
         .filter-section button:hover {
             background-color: #0097a7;
         }
-        table {
+        .filter-section button.secondary {
+            background-color: #333;
+        }
+        .filter-section button.secondary:hover {
+            background-color: #444;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .stat-card h3 {
+            margin-top: 0;
+            color: #00bcd4;
+            font-size: 1rem;
+        }
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .stat-card .positive {
+            color: #4caf50;
+        }
+        .stat-card .negative {
+            color: #f44336;
+        }
+        .stat-card .neutral {
+            color: #ff9800;
+        }
+        .performance-table-container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5rem;
+        }
+        .performance-table-container h2 {
+            margin-top: 0;
+            color: #00bcd4;
+            font-size: 1.2rem;
+        }
+        .performance-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
         }
-        table th, table td {
+        .performance-table th, .performance-table td {
             border: 1px solid #444;
             padding: 0.5rem;
             text-align: center;
         }
-        table th {
-            background-color: #333;
+        .performance-table th {
+            background-color: #1a1a1a;
             color: #00bcd4;
-            cursor: pointer; /* Add pointer cursor for sortable columns */
+        }
+        .performance-table tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+        .performance-table tr:nth-child(odd) {
+            background-color: #1e1e1e;
+        }
+        .performance-table tr:hover {
+            background-color: #333;
+        }
+        .performance-table .total-row {
+            font-weight: bold;
+            background-color: #333 !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        table th, table td {
+            border: 1px solid #444;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        table th {
+            background-color: #1a1a1a;
+            color: #00bcd4;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         table tr:nth-child(even) {
             background-color: #2a2a2a;
         }
         table tr:nth-child(odd) {
             background-color: #1e1e1e;
+        }
+        table tr:hover {
+            background-color: #333;
+        }
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .chart-container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .chart-container h2 {
+            margin-top: 0;
+            color: #00bcd4;
+            font-size: 1.2rem;
+        }
+        canvas {
+            width: 100% !important;
+            height: 250px !important;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 188, 212, 0.3);
+            border-radius: 50%;
+            border-top-color: #00bcd4;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(30, 30, 30, 0.9);
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.5rem;
+            pointer-events: none;
+            z-index: 100;
+            font-size: 0.9rem;
+            max-width: 300px;
+        }
+        .profit-positive {
+            color: #4caf50;
+            font-weight: 600;
+        }
+        .profit-negative {
+            color: #f44336;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -88,13 +268,130 @@
     </nav>
     <div class="container">
         <h1>Historical Analysis</h1>
-        <p id="no-historical-data-message">Fetching historical data...</p>
+        <p id="no-historical-data-message">Fetching historical data... <span class="loading"></span></p>
 
         <!-- Filter Section -->
         <div class="filter-section">
-            <label for="filter-input">Filter by Symbol or Side:</label>
-            <input type="text" id="filter-input" placeholder="Enter symbol or side (e.g., BTC, short)">
-            <button id="export-button">Export to CSV</button>
+            <div>
+                <label for="time-period">Time Period:</label>
+                <select id="time-period">
+                    <option value="all">All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div id="custom-range-container" style="display: none;">
+                <label for="start-date">From:</label>
+                <input type="date" id="start-date">
+                <label for="end-date">To:</label>
+                <input type="date" id="end-date">
+            </div>
+            <div>
+                <label for="symbol-filter">Symbol:</label>
+                <select id="symbol-filter">
+                    <option value="all">All Symbols</option>
+                </select>
+            </div>
+            <div>
+                <label for="side-filter">Side:</label>
+                <select id="side-filter">
+                    <option value="all">All</option>
+                    <option value="long">Long</option>
+                    <option value="short">Short</option>
+                </select>
+            </div>
+            <div style="margin-left: auto;">
+                <button id="apply-filters">Apply Filters</button>
+                <button id="reset-filters" class="secondary">Reset</button>
+                <button id="export-button">Export CSV</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column - Stats and Performance Table -->
+            <div>
+                <!-- Stats Cards -->
+                <div class="stats-container" id="stats-container" style="display: none;">
+                    <div class="stat-card">
+                        <h3>Total P&L</h3>
+                        <div class="value" id="total-pnl">0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Trades</h3>
+                        <div class="value" id="total-trades">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Win Rate</h3>
+                        <div class="value" id="win-rate">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg. Profit/Loss</h3>
+                        <div class="value" id="avg-profit">0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Profit Factor</h3>
+                        <div class="value" id="profit-factor">0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Best Trade</h3>
+                        <div class="value positive" id="best-trade">+0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Worst Trade</h3>
+                        <div class="value negative" id="worst-trade">-0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Max Drawdown</h3>
+                        <div class="value negative" id="max-drawdown">-0.00%</div>
+                    </div>
+                </div>
+
+                <!-- Performance Table -->
+                <div class="performance-table-container" id="performance-table-container" style="display: none;">
+                    <h2>Trade Performance by Symbol</h2>
+                    <table class="performance-table" id="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Side</th>
+                                <th>Winning Trades</th>
+                                <th>Losing Trades</th>
+                                <th>Total Trades</th>
+                                <th>Profitability %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performance-table-body">
+                            <!-- Data will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column - Charts -->
+            <div>
+                <!-- Charts Section -->
+                <div class="charts-section" id="charts-section" style="display: none;">
+                    <div class="chart-container">
+                        <h2>Equity Curve</h2>
+                        <canvas id="equityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2>Profit/Loss Distribution</h2>
+                        <canvas id="profitDistributionChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2>Symbol Performance</h2>
+                        <canvas id="symbolPerformanceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2>Trade Duration</h2>
+                        <canvas id="durationChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Table for Historical Trades -->
@@ -110,7 +407,7 @@
                     <th data-sort="entry_price">Entry Price</th>
                     <th data-sort="exit_price">Exit Price</th>
                     <th data-sort="profit_loss">Profit/Loss</th>
-                    <th data-sort="trade_duration">Trade Duration</th>
+                    <th data-sort="trade_duration">Duration</th>
                     <th data-sort="exit_reason">Exit Reason</th>
                 </tr>
             </thead>
@@ -120,153 +417,801 @@
         </table>
     </div>
 
+    <div class="tooltip" id="tooltip" style="display: none;"></div>
+
     <script>
         // Replace with your Raspberry Pi's IP address
         const historicalApiUrl = 'http://192.168.1.9:5000/api/historical-trades';
 
+        let allTradesData = [];
+        let filteredTradesData = [];
         let currentSortColumn = null;
         let currentSortDirection = 'asc';
+        let charts = {};
 
-        function formatNumber(value) {
-            return parseFloat(value).toFixed(2);
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            fetchHistoricalTrades();
+        });
+
+        function setupEventListeners() {
+            // Table sorting
+            document.querySelectorAll('th[data-sort]').forEach((header, index) => {
+                header.addEventListener('click', () => sortTable(index + 1));
+            });
+
+            // Filter controls
+            document.getElementById('time-period').addEventListener('change', function() {
+                document.getElementById('custom-range-container').style.display = 
+                    this.value === 'custom' ? 'flex' : 'none';
+            });
+
+            document.getElementById('apply-filters').addEventListener('click', applyFilters);
+            document.getElementById('reset-filters').addEventListener('click', resetFilters);
+            document.getElementById('export-button').addEventListener('click', exportToCSV);
         }
 
-        function formatDuration(duration) {
-            const minutes = Math.floor(duration / 60);
-            const hours = Math.floor(minutes / 60);
-            return `${hours}h ${minutes % 60}m`;
+        function formatNumber(value, decimals = 2) {
+            return parseFloat(value).toFixed(decimals);
         }
 
-        function sortTable(column) {
+        function formatDuration(durationInSeconds) {
+            const seconds = Math.floor(durationInSeconds % 60);
+            const minutes = Math.floor((durationInSeconds / 60) % 60);
+            const hours = Math.floor((durationInSeconds / (60 * 60)) % 24);
+            const days = Math.floor(durationInSeconds / (60 * 60 * 24));
+            
+            let parts = [];
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0) parts.push(`${minutes}m`);
+            if (seconds > 0 && parts.length < 2) parts.push(`${seconds}s`);
+            
+            return parts.join(' ') || '0s';
+        }
+
+        function formatDate(date) {
+            return new Date(date).toISOString().split('T')[0];
+        }
+
+        function calculateStats(trades) {
+            if (trades.length === 0) return {};
+            
+            const winningTrades = trades.filter(t => parseFloat(t.profit_loss) > 0);
+            const losingTrades = trades.filter(t => parseFloat(t.profit_loss) <= 0);
+            
+            const totalPnl = trades.reduce((sum, trade) => sum + parseFloat(trade.profit_loss), 0);
+            const totalProfit = trades.reduce((sum, trade) => sum + Math.max(0, parseFloat(trade.profit_loss)), 0);
+            const totalLoss = trades.reduce((sum, trade) => sum + Math.min(0, parseFloat(trade.profit_loss)), 0);
+            
+            const profitFactor = totalLoss !== 0 ? Math.abs(totalProfit / totalLoss) : 0;
+            
+            // Calculate equity curve for drawdown
+            let runningBalance = 0;
+            let peak = 0;
+            let maxDrawdown = 0;
+            const equityCurve = trades.map(trade => {
+                runningBalance += parseFloat(trade.profit_loss);
+                if (runningBalance > peak) peak = runningBalance;
+                const drawdown = peak - runningBalance;
+                if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+                return {
+                    date: new Date(parseFloat(trade.exit_time) * 1000),
+                    balance: runningBalance,
+                    drawdown: drawdown
+                };
+            });
+            
+            const drawdownPercentage = peak !== 0 ? (maxDrawdown / peak) * 100 : 0;
+            
+            return {
+                totalPnl: totalPnl,
+                totalTrades: trades.length,
+                winRate: trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0,
+                avgProfit: trades.length > 0 ? totalPnl / trades.length : 0,
+                profitFactor: profitFactor,
+                bestTrade: trades.length > 0 ? Math.max(...trades.map(t => parseFloat(t.profit_loss))) : 0,
+                worstTrade: trades.length > 0 ? Math.min(...trades.map(t => parseFloat(t.profit_loss))) : 0,
+                avgDuration: trades.length > 0 ? trades.reduce((sum, trade) => sum + parseFloat(trade.trade_duration), 0) / trades.length : 0,
+                maxDrawdown: drawdownPercentage,
+                equityCurve: equityCurve
+            };
+        }
+
+        function calculatePerformanceBySymbol(trades) {
+            const performanceData = {};
+            
+            // Initialize structure for each symbol
+            trades.forEach(trade => {
+                if (!performanceData[trade.symbol]) {
+                    performanceData[trade.symbol] = {
+                        long: { wins: 0, losses: 0, total: 0 },
+                        short: { wins: 0, losses: 0, total: 0 }
+                    };
+                }
+                
+                const side = trade.side.toLowerCase();
+                const isWin = parseFloat(trade.profit_loss) > 0;
+                
+                if (side === 'long') {
+                    performanceData[trade.symbol].long.total++;
+                    if (isWin) {
+                        performanceData[trade.symbol].long.wins++;
+                    } else {
+                        performanceData[trade.symbol].long.losses++;
+                    }
+                } else if (side === 'short') {
+                    performanceData[trade.symbol].short.total++;
+                    if (isWin) {
+                        performanceData[trade.symbol].short.wins++;
+                    } else {
+                        performanceData[trade.symbol].short.losses++;
+                    }
+                }
+            });
+            
+            return performanceData;
+        }
+
+        function updateStats(stats) {
+            document.getElementById('total-pnl').textContent = 
+                (stats.totalPnl >= 0 ? '+' : '') + formatNumber(stats.totalPnl);
+            document.getElementById('total-pnl').className = 
+                'value ' + (stats.totalPnl >= 0 ? 'positive' : 'negative');
+                
+            document.getElementById('total-trades').textContent = stats.totalTrades;
+            document.getElementById('win-rate').textContent = formatNumber(stats.winRate, 1) + '%';
+            document.getElementById('avg-profit').textContent = 
+                (stats.avgProfit >= 0 ? '+' : '') + formatNumber(stats.avgProfit);
+            document.getElementById('profit-factor').textContent = formatNumber(stats.profitFactor, 2);
+            document.getElementById('best-trade').textContent = (stats.bestTrade > 0 ? '+' : '') + formatNumber(stats.bestTrade);
+            document.getElementById('worst-trade').textContent = (stats.worstTrade > 0 ? '+' : '') + formatNumber(stats.worstTrade);
+            document.getElementById('max-drawdown').textContent = '-' + formatNumber(stats.maxDrawdown, 2) + '%';
+            
+            // Show stats container if hidden
+            document.getElementById('stats-container').style.display = 'grid';
+        }
+
+        function updatePerformanceTable(trades) {
+            const performanceData = calculatePerformanceBySymbol(trades);
+            const tableBody = document.getElementById('performance-table-body');
+            tableBody.innerHTML = '';
+            
+            const symbols = Object.keys(performanceData).sort();
+            let totalWins = 0;
+            let totalLosses = 0;
+            let totalTrades = 0;
+            
+            symbols.forEach(symbol => {
+                // Long trades row
+                const longData = performanceData[symbol].long;
+                if (longData.total > 0) {
+                    const longRow = document.createElement('tr');
+                    longRow.innerHTML = `
+                        <td>${symbol}</td>
+                        <td>Long</td>
+                        <td>${longData.wins}</td>
+                        <td>${longData.losses}</td>
+                        <td>${longData.total}</td>
+                        <td>${longData.total > 0 ? formatNumber((longData.wins / longData.total) * 100, 1) : '0'}%</td>
+                    `;
+                    tableBody.appendChild(longRow);
+                    totalWins += longData.wins;
+                    totalLosses += longData.losses;
+                    totalTrades += longData.total;
+                }
+                
+                // Short trades row
+                const shortData = performanceData[symbol].short;
+                if (shortData.total > 0) {
+                    const shortRow = document.createElement('tr');
+                    shortRow.innerHTML = `
+                        <td>${symbol}</td>
+                        <td>Short</td>
+                        <td>${shortData.wins}</td>
+                        <td>${shortData.losses}</td>
+                        <td>${shortData.total}</td>
+                        <td>${shortData.total > 0 ? formatNumber((shortData.wins / shortData.total) * 100, 1) : '0'}%</td>
+                    `;
+                    tableBody.appendChild(shortRow);
+                    totalWins += shortData.wins;
+                    totalLosses += shortData.losses;
+                    totalTrades += shortData.total;
+                }
+            });
+            
+            // Total row
+            if (totalTrades > 0) {
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'total-row';
+                totalRow.innerHTML = `
+                    <td><strong>Total</strong></td>
+                    <td>-</td>
+                    <td>${totalWins}</td>
+                    <td>${totalLosses}</td>
+                    <td>${totalTrades}</td>
+                    <td>${formatNumber((totalWins / totalTrades) * 100, 1)}%</td>
+                `;
+                tableBody.appendChild(totalRow);
+            }
+            
+            // Show table if hidden
+            document.getElementById('performance-table-container').style.display = 'block';
+        }
+
+        function renderCharts(data) {
+            // Destroy existing charts to prevent memory leaks
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            const stats = calculateStats(data);
+            
+            // 1. Equity Curve Chart
+            const equityCtx = document.getElementById('equityChart').getContext('2d');
+            charts.equityChart = new Chart(equityCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Equity Curve',
+                        data: stats.equityCurve.map(point => ({
+                            x: point.date,
+                            y: point.balance
+                        })),
+                        borderColor: '#00bcd4',
+                        backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Balance: ${formatNumber(context.raw.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                tooltipFormat: 'MMM d, yyyy'
+                            },
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        },
+                        y: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        }
+                    }
+                }
+            });
+            
+            // 2. Profit Distribution Chart
+            const profitBins = {
+                'Large Loss (< -5)': 0,
+                'Moderate Loss (-5 to -1)': 0,
+                'Small Loss (-1 to 0)': 0,
+                'Small Profit (0 to 1)': 0,
+                'Moderate Profit (1 to 5)': 0,
+                'Large Profit (> 5)': 0
+            };
+            
+            data.forEach(trade => {
+                const profit = parseFloat(trade.profit_loss);
+                if (profit < -5) profitBins['Large Loss (< -5)']++;
+                else if (profit < -1) profitBins['Moderate Loss (-5 to -1)']++;
+                else if (profit < 0) profitBins['Small Loss (-1 to 0)']++;
+                else if (profit < 1) profitBins['Small Profit (0 to 1)']++;
+                else if (profit < 5) profitBins['Moderate Profit (1 to 5)']++;
+                else profitBins['Large Profit (> 5)']++;
+            });
+            
+            const profitCtx = document.getElementById('profitDistributionChart').getContext('2d');
+            charts.profitDistributionChart = new Chart(profitCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(profitBins),
+                    datasets: [{
+                        label: 'Number of Trades',
+                        data: Object.values(profitBins),
+                        backgroundColor: [
+                            '#f44336',
+                            '#ff9800',
+                            '#ffc107',
+                            '#cddc39',
+                            '#4caf50',
+                            '#009688'
+                        ],
+                        borderColor: '#1e1e1e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw} trades (${((context.raw / data.length) * 100).toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        },
+                        y: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        }
+                    }
+                }
+            });
+            
+            // 3. Symbol Performance Chart
+            const symbolPerformance = {};
+            data.forEach(trade => {
+                if (!symbolPerformance[trade.symbol]) {
+                    symbolPerformance[trade.symbol] = {
+                        count: 0,
+                        totalProfit: 0,
+                        wins: 0
+                    };
+                }
+                symbolPerformance[trade.symbol].count++;
+                symbolPerformance[trade.symbol].totalProfit += parseFloat(trade.profit_loss);
+                if (parseFloat(trade.profit_loss) > 0) symbolPerformance[trade.symbol].wins++;
+            });
+            
+            const symbols = Object.keys(symbolPerformance);
+            const symbolCtx = document.getElementById('symbolPerformanceChart').getContext('2d');
+            charts.symbolPerformanceChart = new Chart(symbolCtx, {
+                type: 'bar',
+                data: {
+                    labels: symbols,
+                    datasets: [
+                        {
+                            label: 'Avg. Profit',
+                            data: symbols.map(s => symbolPerformance[s].totalProfit / symbolPerformance[s].count),
+                            backgroundColor: symbols.map(s => 
+                                (symbolPerformance[s].totalProfit / symbolPerformance[s].count) >= 0 
+                                    ? 'rgba(76, 175, 80, 0.7)' 
+                                    : 'rgba(244, 67, 54, 0.7)'
+                            ),
+                            borderColor: '#1e1e1e',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Win Rate',
+                            data: symbols.map(s => (symbolPerformance[s].wins / symbolPerformance[s].count) * 100),
+                            backgroundColor: 'rgba(0, 188, 212, 0.3)',
+                            borderColor: '#00bcd4',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const symbol = context.label;
+                                    return `Trades: ${symbolPerformance[symbol].count}\n` +
+                                           `Total P/L: ${formatNumber(symbolPerformance[symbol].totalProfit)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { text: 'Avg. Profit', display: true, color: '#ffffff' },
+                            ticks: { color: '#ffffff' },
+                            grid: { color: '#444' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { text: 'Win Rate %', display: true, color: '#ffffff' },
+                            ticks: { color: '#ffffff' },
+                            grid: { drawOnChartArea: false },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // 4. Trade Duration Chart
+            const durationBins = {
+                '< 1h': 0,
+                '1h-4h': 0,
+                '4h-12h': 0,
+                '12h-1d': 0,
+                '1d-3d': 0,
+                '> 3d': 0
+            };
+            
+            data.forEach(trade => {
+                const duration = parseFloat(trade.trade_duration) / 3600; // Convert to hours
+                if (duration < 1) durationBins['< 1h']++;
+                else if (duration < 4) durationBins['1h-4h']++;
+                else if (duration < 12) durationBins['4h-12h']++;
+                else if (duration < 24) durationBins['12h-1d']++;
+                else if (duration < 72) durationBins['1d-3d']++;
+                else durationBins['> 3d']++;
+            });
+            
+            const durationCtx = document.getElementById('durationChart').getContext('2d');
+            charts.durationChart = new Chart(durationCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(durationBins),
+                    datasets: [{
+                        data: Object.values(durationBins),
+                        backgroundColor: [
+                            '#00bcd4',
+                            '#009688',
+                            '#4caf50',
+                            '#8bc34a',
+                            '#ffc107',
+                            '#ff9800'
+                        ],
+                        borderColor: '#1e1e1e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} (${((context.raw / data.length) * 100).toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Show charts section if hidden
+            document.getElementById('charts-section').style.display = 'grid';
+        }
+
+        function sortTable(columnIndex) {
             const tableBody = document.getElementById('historical-trades-body');
             const rows = Array.from(tableBody.querySelectorAll('tr'));
-
-            if (currentSortColumn === column) {
+            
+            if (currentSortColumn === columnIndex) {
                 currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSortDirection = 'asc';
+                currentSortColumn = columnIndex;
             }
-            currentSortColumn = column;
-
+            
+            const headerText = document.querySelector(`th:nth-child(${columnIndex})`).textContent.toLowerCase();
+            const isNumeric = ['profit_loss', 'entry_price', 'exit_price', 'trade_duration'].some(term => 
+                headerText.includes(term.toLowerCase())
+            );
+            
             rows.sort((a, b) => {
-                const aValue = a.querySelector(`td:nth-child(${column})`).textContent.trim();
-                const bValue = b.querySelector(`td:nth-child(${column})`).textContent.trim();
-
-                if (!isNaN(aValue) && !isNaN(bValue)) {
-                    return currentSortDirection === 'asc'
-                        ? parseFloat(aValue) - parseFloat(bValue)
-                        : parseFloat(bValue) - parseFloat(aValue);
+                const aValue = a.querySelector(`td:nth-child(${columnIndex})`).textContent.trim();
+                const bValue = b.querySelector(`td:nth-child(${columnIndex})`).textContent.trim();
+                
+                if (isNumeric) {
+                    const aNum = parseFloat(aValue.replace(/[^\d.-]/g, ''));
+                    const bNum = parseFloat(bValue.replace(/[^\d.-]/g, ''));
+                    return currentSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                } else if (headerText.includes('date') || headerText.includes('time')) {
+                    const aDate = new Date(aValue);
+                    const bDate = new Date(bValue);
+                    return currentSortDirection === 'asc' ? aDate - bDate : bDate - aDate;
                 } else {
-                    return currentSortDirection === 'asc'
-                        ? aValue.localeCompare(bValue)
+                    return currentSortDirection === 'asc' 
+                        ? aValue.localeCompare(bValue) 
                         : bValue.localeCompare(aValue);
                 }
             });
-
+            
+            // Clear and re-append sorted rows
+            tableBody.innerHTML = '';
             rows.forEach(row => tableBody.appendChild(row));
+            
+            // Update sort indicator in header
+            document.querySelectorAll('th').forEach(th => {
+                th.innerHTML = th.innerHTML.replace(/ ?↑|↓/g, '');
+            });
+            
+            const currentHeader = document.querySelector(`th:nth-child(${columnIndex})`);
+            currentHeader.innerHTML += currentSortDirection === 'asc' ? ' ↑' : ' ↓';
         }
 
-        function filterTable() {
-            const filterValue = document.getElementById('filter-input').value.toLowerCase();
-            const tableBody = document.getElementById('historical-trades-body');
-            const rows = tableBody.querySelectorAll('tr');
-
-            rows.forEach(row => {
-                const symbol = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-                const side = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-
-                if (symbol.includes(filterValue) || side.includes(filterValue)) {
-                    row.style.display = '';
+        function applyFilters() {
+            const timePeriod = document.getElementById('time-period').value;
+            const symbolFilter = document.getElementById('symbol-filter').value;
+            const sideFilter = document.getElementById('side-filter').value;
+            
+            let filteredData = [...allTradesData];
+            
+            // Apply symbol filter
+            if (symbolFilter !== 'all') {
+                filteredData = filteredData.filter(trade => trade.symbol === symbolFilter);
+            }
+            
+            // Apply side filter
+            if (sideFilter !== 'all') {
+                filteredData = filteredData.filter(trade => trade.side.toLowerCase() === sideFilter);
+            }
+            
+            // Apply time period filter
+            if (timePeriod !== 'all') {
+                const now = new Date();
+                let cutoffDate;
+                
+                if (timePeriod === 'custom') {
+                    const startDate = document.getElementById('start-date').value;
+                    const endDate = document.getElementById('end-date').value;
+                    
+                    if (startDate && endDate) {
+                        filteredData = filteredData.filter(trade => {
+                            const exitDate = new Date(parseFloat(trade.exit_time) * 1000);
+                            return exitDate >= new Date(startDate) && exitDate <= new Date(endDate + 'T23:59:59');
+                        });
+                    }
                 } else {
-                    row.style.display = 'none';
+                    const days = parseInt(timePeriod);
+                    cutoffDate = new Date(now);
+                    cutoffDate.setDate(now.getDate() - days);
+                    
+                    filteredData = filteredData.filter(trade => {
+                        const exitDate = new Date(parseFloat(trade.exit_time) * 1000);
+                        return exitDate >= cutoffDate;
+                    });
                 }
+            }
+            
+            filteredTradesData = filteredData;
+            updateTable(filteredData);
+            updateStats(calculateStats(filteredData));
+            updatePerformanceTable(filteredData);
+            renderCharts(filteredData);
+        }
+
+        function resetFilters() {
+            document.getElementById('time-period').value = 'all';
+            document.getElementById('symbol-filter').value = 'all';
+            document.getElementById('side-filter').value = 'all';
+            document.getElementById('custom-range-container').style.display = 'none';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            
+            filteredTradesData = [...allTradesData];
+            updateTable(allTradesData);
+            updateStats(calculateStats(allTradesData));
+            updatePerformanceTable(allTradesData);
+            renderCharts(allTradesData);
+        }
+
+        function updateTable(data) {
+            const tableBody = document.getElementById('historical-trades-body');
+            const table = document.getElementById('historical-trades-table');
+            const noDataMessage = document.getElementById('no-historical-data-message');
+            
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                noDataMessage.textContent = 'No trades match the selected filters.';
+                noDataMessage.style.display = 'block';
+                table.style.display = 'none';
+                document.getElementById('stats-container').style.display = 'none';
+                document.getElementById('performance-table-container').style.display = 'none';
+                document.getElementById('charts-section').style.display = 'none';
+                return;
+            }
+            
+            noDataMessage.style.display = 'none';
+            table.style.display = 'table';
+            
+            data.forEach(trade => {
+                const entryDateTime = new Date(parseFloat(trade.entry_time) * 1000);
+                const exitDateTime = new Date(parseFloat(trade.exit_time) * 1000);
+                const profitLoss = parseFloat(trade.profit_loss);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${trade.symbol}</td>
+                    <td>${trade.side}</td>
+                    <td>${entryDateTime.toLocaleDateString()}</td>
+                    <td>${entryDateTime.toLocaleTimeString()}</td>
+                    <td>${exitDateTime.toLocaleDateString()}</td>
+                    <td>${exitDateTime.toLocaleTimeString()}</td>
+                    <td>${formatNumber(trade.entry_price)}</td>
+                    <td>${formatNumber(trade.exit_price)}</td>
+                    <td class="${profitLoss >= 0 ? 'profit-positive' : 'profit-negative'}">
+                        ${profitLoss >= 0 ? '+' : ''}${formatNumber(profitLoss)}
+                    </td>
+                    <td>${formatDuration(trade.trade_duration)}</td>
+                    <td>${trade.exit_reason}</td>
+                `;
+                
+                // Add tooltip on hover
+                row.addEventListener('mouseenter', (e) => {
+                    const tooltip = document.getElementById('tooltip');
+                    tooltip.innerHTML = `
+                        <strong>${trade.symbol} ${trade.side}</strong><br>
+                        Entry: ${entryDateTime.toLocaleString()}<br>
+                        Exit: ${exitDateTime.toLocaleString()}<br>
+                        Duration: ${formatDuration(trade.trade_duration)}<br>
+                        P/L: <span class="${profitLoss >= 0 ? 'profit-positive' : 'profit-negative'}">
+                            ${profitLoss >= 0 ? '+' : ''}${formatNumber(profitLoss)}
+                        </span><br>
+                        Exit Reason: ${trade.exit_reason}
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                });
+                
+                row.addEventListener('mouseleave', () => {
+                    document.getElementById('tooltip').style.display = 'none';
+                });
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Reset sorting
+            currentSortColumn = null;
+            currentSortDirection = 'asc';
+            document.querySelectorAll('th').forEach(th => {
+                th.innerHTML = th.textContent.replace(/ ?↑|↓/g, '');
             });
         }
 
         function exportToCSV() {
-            const tableBody = document.getElementById('historical-trades-body');
-            const rows = Array.from(tableBody.querySelectorAll('tr'));
-
-            if (rows.length === 0) {
+            if (filteredTradesData.length === 0) {
                 alert('No data available to export.');
                 return;
             }
-
-            // Extract table headers
-            const headers = Array.from(document.querySelectorAll('th')).map(header => header.textContent.trim());
-
-            // Extract table rows
-            const csvRows = rows.map(row => {
-                const cells = Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim());
-                return cells.join(',');
+            
+            // Extract headers from table
+            const headers = Array.from(document.querySelectorAll('th')).map(header => 
+                header.textContent.replace(/ ?↑|↓/g, '').trim()
+            );
+            
+            // Prepare CSV content
+            let csvContent = headers.join(',') + '\n';
+            
+            filteredTradesData.forEach(trade => {
+                const entryDateTime = new Date(parseFloat(trade.entry_time) * 1000);
+                const exitDateTime = new Date(parseFloat(trade.exit_time) * 1000);
+                
+                const row = [
+                    `"${trade.symbol}"`,
+                    `"${trade.side}"`,
+                    `"${entryDateTime.toLocaleDateString()}"`,
+                    `"${entryDateTime.toLocaleTimeString()}"`,
+                    `"${exitDateTime.toLocaleDateString()}"`,
+                    `"${exitDateTime.toLocaleTimeString()}"`,
+                    formatNumber(trade.entry_price),
+                    formatNumber(trade.exit_price),
+                    formatNumber(trade.profit_loss),
+                    `"${formatDuration(trade.trade_duration)}"`,
+                    `"${trade.exit_reason}"`
+                ];
+                
+                csvContent += row.join(',') + '\n';
             });
-
-            // Combine headers and rows
-            const csvContent = [headers.join(','), ...csvRows].join('\n');
-
-            // Create a Blob and trigger download
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'historical_trades.csv';
-            a.click();
-            URL.revokeObjectURL(url);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trades_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        document.querySelectorAll('th[data-sort]').forEach((header, index) => {
-            header.addEventListener('click', () => sortTable(index + 1));
-        });
-
-        document.getElementById('filter-input').addEventListener('input', filterTable);
-        document.getElementById('export-button').addEventListener('click', exportToCSV);
-
+        // Replace your current fetchHistoricalTrades function with this optimized version
         async function fetchHistoricalTrades() {
+            const noDataMessage = document.getElementById('no-historical-data-message');
+            noDataMessage.innerHTML = 'Fetching historical data... <span class="loading"></span>';
+            
             try {
                 const response = await fetch(historicalApiUrl);
-                const data = await response.json();
-
-                const table = document.getElementById('historical-trades-table');
-                const tableBody = document.getElementById('historical-trades-body');
-                const noDataMessage = document.getElementById('no-historical-data-message');
-
-                tableBody.innerHTML = '';
-
-                if (data.length === 0) {
-                    noDataMessage.textContent = 'No historical trades available.';
-                    table.style.display = 'none';
-                } else {
-                    noDataMessage.style.display = 'none';
-                    table.style.display = 'table';
-
-                    data.forEach(trade => {
-                        const entryDateTime = new Date(parseFloat(trade.entry_time) * 1000);
-                        const exitDateTime = new Date(parseFloat(trade.exit_time) * 1000);
-
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${trade.symbol}</td>
-                            <td>${trade.side}</td>
-                            <td>${entryDateTime.toLocaleDateString()}</td>
-                            <td>${entryDateTime.toLocaleTimeString()}</td>
-                            <td>${exitDateTime.toLocaleDateString()}</td>
-                            <td>${exitDateTime.toLocaleTimeString()}</td>
-                            <td>${formatNumber(trade.entry_price)}</td>
-                            <td>${formatNumber(trade.exit_price)}</td>
-                            <td>${formatNumber(trade.profit_loss)}</td>
-                            <td>${formatDuration(trade.trade_duration)}</td>
-                            <td>${trade.exit_reason}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    noDataMessage.innerHTML = 'No historical trades available.';
+                    return;
+                }
+                
+                allTradesData = data;
+                filteredTradesData = [...data];
+                
+                // Populate symbol filter dropdown
+                const uniqueSymbols = [...new Set(data.map(trade => trade.symbol))].sort();
+                const symbolFilter = document.getElementById('symbol-filter');
+                symbolFilter.innerHTML = '<option value="all">All Symbols</option>';
+                
+                uniqueSymbols.forEach(symbol => {
+                    const option = document.createElement('option');
+                    option.value = symbol;
+                    option.textContent = symbol;
+                    symbolFilter.appendChild(option);
+                });
+                
+                // Set default date range for custom filter
+                if (data.length > 0) {
+                    const firstDate = new Date(Math.min(...data.map(t => parseFloat(t.exit_time) * 1000)));
+                    const lastDate = new Date(Math.max(...data.map(t => parseFloat(t.exit_time) * 1000)));
+                    
+                    document.getElementById('start-date').min = formatDate(firstDate);
+                    document.getElementById('start-date').max = formatDate(lastDate);
+                    document.getElementById('end-date').min = formatDate(firstDate);
+                    document.getElementById('end-date').max = formatDate(lastDate);
+                    document.getElementById('start-date').value = formatDate(firstDate);
+                    document.getElementById('end-date').value = formatDate(lastDate);
+                }
+                
+                // Hide loading message and show content
+                noDataMessage.style.display = 'none';
+                updateTable(data);
+                updateStats(calculateStats(data));
+                updatePerformanceTable(data);
+                renderCharts(data);
+                
             } catch (error) {
                 console.error('Error fetching historical trades:', error);
-                document.getElementById('no-historical-data-message').textContent = 'Error fetching data. Please try again later.';
+                noDataMessage.innerHTML = `
+                    Error loading data. Please try again.<br>
+                    <small>${error.message}</small>
+                    <button id="retry-button" style="margin-top: 10px;">Retry</button>
+                `;
+                document.getElementById('retry-button').addEventListener('click', fetchHistoricalTrades);
             }
         }
-
-        fetchHistoricalTrades();
     </script>
 </body>
 </html>
