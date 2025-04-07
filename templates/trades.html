@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Historical Trades | QuantumBot{% endblock %}
+{% block page_title %}Trade History{% endblock %}
+
+{% block content %}
+<div class="card glass-effect mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Trade History</h3>
+        {% if trades %}
+        <a href="/export-trades" class="btn btn-export">
+            <i class="fas fa-file-export"></i> Export CSV
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Filter Form -->
+    <div class="card-body">
+        <form method="GET" action="/trades">
+            <div class="row g-3">
+                <!-- Date Filters -->
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-start"></i></span>
+                        <input type="date" id="start_date" name="start_date" class="form-control" 
+                               value="{{ request.args.get('start_date') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-end"></i></span>
+                        <input type="date" id="end_date" name="end_date" class="form-control" 
+                               value="{{ request.args.get('end_date') }}">
+                    </div>
+                </div>
+
+                <!-- Symbol and Profitability Filters -->
+                <div class="col-md-3">
+                    <label for="symbol" class="form-label">Symbol</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-coins"></i></span>
+                        <select id="symbol" name="symbol" class="form-select">
+                            <option value="">All Symbols</option>
+                            {% for symbol in symbols %}
+                            <option value="{{ symbol }}" {% if request.args.get('symbol') == symbol %}selected{% endif %}>
+                                {{ symbol }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="profitability" class="form-label">Result</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-chart-line"></i></span>
+                        <select id="profitability" name="profitability" class="form-select">
+                            <option value="">All Trades</option>
+                            <option value="profitable" {% if request.args.get('profitability') == "profitable" %}selected{% endif %}>Profitable</option>
+                            <option value="losing" {% if request.args.get('profitability') == "losing" %}selected{% endif %}>Losing</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-filter me-2">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="/trades" class="btn btn-clear">
+                    <i class="fas fa-broom"></i> Clear Filters
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Historical Trades Table -->
+<div class="card glass-effect">
+    <div class="card-body p-0">
+        {% if trades and trades|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center">ID</th>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th class="text-end">Entry</th>
+                        <th class="text-end">Exit</th>
+                        <th class="text-end">P&L</th>
+                        <th class="text-center">Duration</th>
+                        <th>Exit Reason</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-center">Leverage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trade in trades %}
+                    <tr>
+                        <td class="text-center text-muted">{{ trade.id if trade.id else "—" }}</td>
+                        <td>
+                            <span class="symbol-badge">{{ trade.symbol if trade.symbol else "—" }}</span>
+                        </td>
+                        <td>
+                            <span class="side-badge {{ 'buy' if trade.side == 'buy' else 'sell' }}">
+                                {{ trade.side if trade.side else "—" | upper }}
+                            </span>
+                        </td>
+                        <td class="text-end">${{ "%.2f"|format(trade.entry_price) if trade.entry_price else "—" }}</td>
+                        <td class="text-end">${{ "%.2f"|format(trade.exit_price) if trade.exit_price else "—" }}</td>
+                        <td class="text-end {{ 'text-profit' if trade.profit_loss and trade.profit_loss > 0 else 'text-loss' if trade.profit_loss else '' }}">
+                            {% if trade.profit_loss %}
+                                ${{ "%.2f"|format(trade.profit_loss) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if trade.trade_duration %}
+                                {{ (trade.trade_duration // 3600) }}h {{ (trade.trade_duration % 3600) // 60 }}m
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="reason-badge">{{ trade.exit_reason if trade.exit_reason else "—" }}</span>
+                        </td>
+                        <td class="text-center">{{ trade.quantity if trade.quantity else "—" }}</td>
+                        <td class="text-center">{{ trade.leverage if trade.leverage else "—" }}x</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history empty-icon"></i>
+            <h4>No Trade History Found</h4>
+            <p>Your trading history will appear here once you complete some trades.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pagination (if applicable) -->
+{% if pagination and pagination.pages > 1 %}
+<div class="mt-4 d-flex justify-content-center">
+    <nav>
+        <ul class="pagination">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('trades', page=pagination.prev_num, **request.args) }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('trades', page=page_num, **request.args) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('trades', page=pagination.next_num, **request.args) }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

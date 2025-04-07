@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}System Logs | QuantumBot{% endblock %}
+{% block page_title %}Trading Logs{% endblock %}
+
+{% block content %}
+<div class="card glass-effect">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">System Logs</h3>
+        <div class="log-actions">
+            <button class="btn btn-refresh-logs">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-download-logs">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body p-0">
+        {% if logs and logs|length > 0 %}
+        <div class="log-container">
+            <div class="log-toolbar">
+                <div class="log-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search logs..." class="log-search-input">
+                </div>
+                <div class="log-filters">
+                    <select class="log-level-filter">
+                        <option value="all">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="log-content">
+                {% for log in logs %}
+                    {% if "---" in log %}
+                    <!-- Section Header -->
+                    <div class="log-section-header">
+                        {{ log }}
+                    </div>
+                    
+                    {% elif "timestamp" in log and "HA_Open" in log %}
+                    <!-- HA Data Table -->
+                    <div class="log-table-container">
+                        <table class="log-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>HA Open</th>
+                                    <th>HA High</th>
+                                    <th>HA Low</th>
+                                    <th>HA Close</th>
+                                    <th>EMA9</th>
+                                    <th>EMA21</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in logs %}
+                                    {% if row|trim and row.split()[0]|length == 19 %}
+                                    <tr>
+                                        {% for cell in row.split() %}
+                                        <td>{{ cell }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% elif log.strip() == "" %}
+                    <!-- Skip empty lines -->
+                    
+                    {% else %}
+                    <!-- Regular Log Entry -->
+                    <div class="log-entry {% if 'ERROR' in log %}log-error{% elif 'WARN' in log %}log-warning{% else %}log-info{% endif %}">
+                        <div class="log-timestamp">
+                            {% if log|length > 24 %}
+                                {{ log[:24] }}
+                            {% endif %}
+                        </div>
+                        <div class="log-message">
+                            {% if log|length > 24 %}
+                                {{ log[24:] }}
+                            {% else %}
+                                {{ log }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-alt empty-icon"></i>
+            <h4>No Logs Available</h4>
+            <p>System logs will appear here when available.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

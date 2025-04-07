@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | QuantumBot{% endblock %}
+{% block page_title %}Trading Overview{% endblock %}
+
+{% block content %}
+<!-- Top Stats Row -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card glass-effect">
+            <div class="card-body">
+                <div class="stat-icon bg-cyan">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_trades }}</div>
+                    <div class="stat-label">Total Trades</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card glass-effect">
+            <div class="card-body">
+                <div class="stat-icon bg-purple">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ avg_trade_duration }}s</div>
+                    <div class="stat-label">Avg Duration</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card glass-effect">
+            <div class="card-body">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value positive">{{ best_trade.profit_loss if best_trade else '0' }}</div>
+                    <div class="stat-label">Best Trade ({{ best_trade.symbol if best_trade else 'N/A' }})</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card glass-effect">
+            <div class="card-body">
+                <div class="stat-icon bg-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value negative">{{ worst_trade.profit_loss if worst_trade else '0' }}</div>
+                    <div class="stat-label">Worst Trade ({{ worst_trade.symbol if worst_trade else 'N/A' }})</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Active Trades Section -->
+    <div class="col-lg-8 mb-4">
+        <div class="card glass-effect">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Active Positions</h3>
+                <span class="badge bg-cyan">{{ active_trades|length }} Open</span>
+            </div>
+            <div class="card-body p-0">
+                {% if active_trades %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Type</th>
+                                <th class="text-end">Entry</th>
+                                <th class="text-end">Current</th>
+                                <th class="text-end">Target</th>
+                                <th class="text-end">P&L</th>
+                                <th class="text-end">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in active_trades %}
+                            <tr>
+                                <td>
+                                    <span class="symbol-badge">{{ trade.symbol }}</span>
+                                </td>
+                                <td>
+                                    <span class="type-badge {{ trade.type|lower }}">{{ trade.type }}</span>
+                                </td>
+                                <td class="text-end">${{ "%.2f"|format(trade.entry_price) }}</td>
+                                <td class="text-end">${{ "%.2f"|format(trade.current_price) }}</td>
+                                <td class="text-end">
+                                    {% if trade.target_price %}
+                                    <span class="target-badge">${{ "%.2f"|format(trade.target_price) }}</span>
+                                    {% else %}
+                                    <span class="na-badge">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <span class="pnl-badge {{ 'positive' if trade.pnl >= 0 else 'negative' }}">
+                                        ${{ "%.2f"|format(trade.pnl) if trade.pnl else "N/A" }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    {% set price_diff = ((trade.current_price - trade.entry_price) / trade.entry_price * 100) %}
+                                    <span class="price-change {{ 'positive' if price_diff >= 0 else 'negative' }}">
+                                        {{ "%.2f"|format(price_diff|abs) }}%
+                                        <i class="fas fa-arrow-{{ 'up' if price_diff >= 0 else 'down' }}"></i>
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-hourglass-start empty-icon"></i>
+                    <h4>No Active Positions</h4>
+                    <p>Your open trades will appear here when you have active positions.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Status Section -->
+    <div class="col-lg-4 mb-4">
+        <div class="card glass-effect">
+            <div class="card-header">
+                <h3 class="mb-0">Bot Status</h3>
+            </div>
+            <div class="card-body">
+                <div class="status-indicator mb-4">
+                    <div class="status-icon {{ 'running' if bot_status.status == 'running' else 'stopped' }}">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="status-info">
+                        <div class="status-value">{{ bot_status.status|upper }}</div>
+                        <div class="status-label">Current State</div>
+                    </div>
+                </div>
+                
+                <div class="status-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Timeframe:</div>
+                        <div class="detail-value">{{ bot_status.timeframe }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Uptime:</div>
+                        <div class="detail-value">{{ bot_status.uptime if bot_status.uptime else 'N/A' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Version:</div>
+                        <div class="detail-value">{{ bot_status.version if bot_status.version else 'N/A' }}</div>
+                    </div>
+                </div>
+                
+                <div class="status-actions mt-4">
+                    <button class="btn btn-start">
+                        <i class="fas fa-play"></i> Start Bot
+                    </button>
+                    <button class="btn btn-stop">
+                        <i class="fas fa-stop"></i> Stop Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Chart Row -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card glass-effect">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Performance Analytics</h3>
+                <div class="chart-actions">
+                    <button class="btn btn-chart active" data-period="7d">7D</button>
+                    <button class="btn btn-chart" data-period="30d">30D</button>
+                    <button class="btn btn-chart" data-period="90d">90D</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts and Coming Soon Row -->
+<div class="row">
+    <!-- Error Highlights -->
+    <div class="col-lg-6 mb-4">
+        <div class="card glass-effect">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Recent Alerts</h3>
+                <span class="badge bg-danger">{{ error_logs|length }} New</span>
+            </div>
+            <div class="card-body">
+                {% if error_logs %}
+                <div class="alert-list">
+                    {% for log in error_logs %}
+                    <div class="alert-item alert-danger">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-message">{{ log.message if log.message else log }}</div>
+                            <div class="alert-time">{{ log.timestamp if log.timestamp else '' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state small">
+                    <i class="fas fa-check-circle empty-icon text-success"></i>
+                    <h5>No Recent Alerts</h5>
+                    <p>All systems operational</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Coming Soon Section -->
+    <div class="col-lg-6 mb-4">
+        <div class="card glass-effect">
+            <div class="card-header">
+                <h3 class="mb-0">Coming Soon</h3>
+            </div>
+            <div class="card-body">
+                <div class="feature-roadmap">
+                    <div class="roadmap-item">
+                        <div class="roadmap-icon bg-purple">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="roadmap-content">
+                            <h5>Advanced Analytics</h5>
+                            <p>Detailed performance metrics and trade statistics</p>
+                        </div>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-icon bg-cyan">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="roadmap-content">
+                            <h5>Smart Notifications</h5>
+                            <p>Real-time alerts for important events</p>
+                        </div>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-icon bg-success">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="roadmap-content">
+                            <h5>Mobile App</h5>
+                            <p>Monitor your bot from anywhere</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Performance Chart
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const performanceData = {{ performance_data | tojson }};
+    
+    const performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: performanceData.labels,
+            datasets: [
+                {
+                    label: 'Profits',
+                    data: performanceData.profits,
+                    borderColor: 'rgba(0, 240, 255, 1)',
+                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Losses',
+                    data: performanceData.losses,
+                    borderColor: 'rgba(255, 45, 117, 1)',
+                    backgroundColor: 'rgba(255, 45, 117, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#e0e0e0',
+                        font: {
+                            family: "'Exo 2', sans-serif"
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(30, 30, 47, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(138, 43, 226, 0.5)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#b8b8d1'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#b8b8d1'
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+
+    // Chart period switcher
+    document.querySelectorAll('.btn-chart').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.btn-chart').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            // Here you would typically fetch new data for the selected period
+            // For now we'll just log it
+            console.log('Selected period:', this.dataset.period);
+        });
+    });
+</script>
+{% endblock %}
