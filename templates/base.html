@@ -16,7 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dark-theme">
-    <!-- Dashboard Wrapper -->
+    <div class="particles"></div>
+    
     <div class="dashboard-wrapper">
         <!-- Sidebar -->
         <aside class="glass-sidebar">
@@ -36,26 +37,26 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li class="nav-item {% if request.path == '/' %}active{% endif %}">
-                        <a href="/" class="nav-link">
+                        <a href="{{ url_for('index') }}" class="nav-link">
                             <i class="fas fa-chart-network"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item {% if request.path == '/active-trades' %}active{% endif %}">
-                        <a href="/active-trades" class="nav-link">
+                        <a href="{{ url_for('active_trades') }}" class="nav-link">
                             <i class="fas fa-bolt"></i>
                             <span>Active Trades</span>
                             <span class="badge pulse-badge">3</span>
                         </a>
                     </li>
                     <li class="nav-item {% if request.path == '/trades' %}active{% endif %}">
-                        <a href="/trades" class="nav-link">
+                        <a href="{{ url_for('trades') }}" class="nav-link">
                             <i class="fas fa-history"></i>
                             <span>Trade History</span>
                         </a>
                     </li>
                     <li class="nav-item {% if request.path == '/logs' %}active{% endif %}">
-                        <a href="/logs" class="nav-link">
+                        <a href="{{ url_for('logs') }}" class="nav-link">
                             <i class="fas fa-terminal"></i>
                             <span>System Logs</span>
                         </a>
@@ -102,6 +103,13 @@
                 {% block content %}{% endblock %}
             </div>
         </main>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab">
+        <button class="btn-fab" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <i class="fas fa-arrow-up"></i>
+        </button>
     </div>
 
     <!-- Bootstrap JS -->

@@ -15,16 +15,26 @@
     --warning: #ff9100;
     --danger: #ff5252;
     --info: #00b0ff;
+    --transition-base: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body.dark-theme {
-    background-color: var(--primary-bg);
+    background: linear-gradient(-45deg, #0a0a12, #12121d, #1a1a2e, #2a2a3b);
+    background-size: 400% 400%;
     color: var(--text-primary);
     font-family: 'Exo 2', sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    animation: gradientBG 15s ease infinite;
+    transition: var(--transition-base);
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* ===== LAYOUT & STRUCTURE ===== */
@@ -42,7 +52,9 @@ body.dark-theme {
     padding: 1.5rem 1rem;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3),
+                -2px 0 5px rgba(0, 240, 255, 0.1) inset;
 }
 
 .main-content {
@@ -69,9 +81,26 @@ body.dark-theme {
     gap: 0.75rem;
 }
 
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.brand-link:hover {
+    opacity: 0.9;
+}
+
 .logo-icon {
     font-size: 1.75rem;
     color: var(--accent-cyan);
+    transition: transform 0.5s ease;
+}
+
+.brand-link:hover .logo-icon {
+    transform: rotate(15deg) scale(1.1);
 }
 
 .brand-name {
@@ -109,6 +138,24 @@ body.dark-theme {
     animation: pulse 1.5s infinite;
 }
 
+.status-indicator::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border-radius: 50%;
+    border: 2px solid var(--success);
+    animation: pulseRing 2s infinite;
+    opacity: 0;
+}
+
+@keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    80%, 100% { transform: scale(1.4); opacity: 0; }
+}
+
 .status-text {
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -131,13 +178,18 @@ body.dark-theme {
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .nav-link i {
     width: 20px;
     text-align: center;
     font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.nav-link:hover i {
+    transform: scale(1.2);
 }
 
 .nav-link:hover {
@@ -149,6 +201,8 @@ body.dark-theme {
     background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), transparent);
     color: var(--accent-purple);
     border-left: 3px solid var(--accent-purple);
+    box-shadow: 0 0 10px var(--accent-purple), 
+                0 0 20px rgba(138, 43, 226, 0.3);
 }
 
 .pulse-badge {
@@ -182,16 +236,18 @@ body.dark-theme {
     width: 100%;
     padding: 0.5rem 1rem 0.5rem 2.5rem;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
+    border-radius: 0;
+    padding-left: 0;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.2);
+    border-bottom-color: var(--accent-cyan);
+    box-shadow: 0 1px 0 0 var(--accent-cyan);
 }
 
 .user-profile {
@@ -200,7 +256,7 @@ body.dark-theme {
     gap: 0.75rem;
     padding: 0.75rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .user-profile:hover {
@@ -232,17 +288,7 @@ body.dark-theme {
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
-.brand-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-    color: inherit;
-}
 
-.brand-link:hover {
-    opacity: 0.9;
-}
 /* ===== TOP BAR ===== */
 .top-bar {
     display: flex;
@@ -278,12 +324,14 @@ body.dark-theme {
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-refresh:hover {
     background: rgba(0, 240, 255, 0.2);
     transform: translateY(-1px);
+    box-shadow: 0 0 10px var(--accent-cyan),
+                0 0 20px rgba(0, 240, 255, 0.3);
 }
 
 .time-display {
@@ -294,20 +342,43 @@ body.dark-theme {
     color: var(--accent-purple);
 }
 
-/* ===== CARD COMPONENTS ===== */
+/* ===== CARDS ===== */
 .card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+                0 2px 8px rgba(0, 240, 255, 0.1);
+    transition: var(--transition-base);
     margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(0, 240, 255, 0) 0%,
+        rgba(0, 240, 255, 0.1) 30%,
+        rgba(138, 43, 226, 0.1) 70%,
+        rgba(138, 43, 226, 0) 100%
+    );
+    transform: rotate(30deg);
+    pointer-events: none;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    transform: perspective(1000px) rotateX(5deg) translateY(-5px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -321,6 +392,7 @@ body.dark-theme {
     letter-spacing: 1px;
     padding: 1rem 1.5rem;
     border-radius: 10px 10px 0 0 !important;
+    transform: translateZ(20px);
 }
 
 .card-body {
@@ -358,14 +430,20 @@ body.dark-theme {
     padding: 1rem;
     border-bottom: 1px solid rgba(138, 43, 226, 0.1);
     vertical-align: middle;
+    transition: var(--transition-base);
 }
 
 .table-dark tr:last-child td {
     border-bottom: none;
 }
 
-.table-dark tr:hover td {
+.table-dark tr {
+    transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.table-dark tr:hover {
     background: rgba(138, 43, 226, 0.05);
+    transform: translateX(4px);
 }
 
 .table-responsive {
@@ -394,7 +472,7 @@ body.dark-theme {
     border-radius: 6px;
     padding: 0.5rem 1rem;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -440,7 +518,7 @@ body.dark-theme {
     color: var(--success);
     padding: 0.5rem 1rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-export:hover {
@@ -474,7 +552,7 @@ body.dark-theme {
     color: var(--accent-cyan);
     padding: 0.5rem 1rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-refresh-logs:hover {
@@ -487,7 +565,7 @@ body.dark-theme {
     color: var(--accent-purple);
     padding: 0.5rem 1rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-download-logs:hover {
@@ -501,7 +579,7 @@ body.dark-theme {
     color: var(--accent-cyan);
     padding: 0.75rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-start:hover {
@@ -515,7 +593,7 @@ body.dark-theme {
     color: var(--danger);
     padding: 0.75rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-stop:hover {
@@ -529,7 +607,7 @@ body.dark-theme {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.75rem;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-chart.active {
@@ -548,7 +626,7 @@ body.dark-theme {
     color: var(--text-secondary);
     font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
     padding: 0.25rem;
     border-radius: 4px;
 }
@@ -563,31 +641,6 @@ body.dark-theme {
 
 .btn-adjust:hover {
     color: var(--accent-cyan);
-}
-
-/* ===== FORM ELEMENTS ===== */
-.form-control {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 0.25rem rgba(0, 240, 255, 0.25);
-}
-
-.log-level-filter {
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-primary);
 }
 
 /* ===== BADGES & INDICATORS ===== */
@@ -681,7 +734,7 @@ body.dark-theme {
 .stat-card {
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
     text-align: center;
     padding: 1rem;
     border-radius: 8px;
@@ -908,16 +961,26 @@ body.dark-theme {
     width: 100%;
     padding: 0.5rem 1rem 0.5rem 2.5rem;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
+    border-radius: 0;
+    padding-left: 0;
 }
 
 .log-search-input:focus {
     outline: none;
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.2);
+    border-bottom-color: var(--accent-cyan);
+    box-shadow: 0 1px 0 0 var(--accent-cyan);
+}
+
+.log-level-filter {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
 }
 
 .log-content {
@@ -944,7 +1007,7 @@ body.dark-theme {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.9rem;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .log-entry:hover {
@@ -1028,7 +1091,7 @@ body.dark-theme {
     gap: 1rem;
     padding: 0.75rem;
     border-radius: 6px;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .alert-item:hover {
@@ -1217,6 +1280,73 @@ button.btn {
     gap: 0.5rem;
 }
 
+/* ===== FLOATING ACTION BUTTON ===== */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100;
+}
+
+.btn-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.btn-fab:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 25px rgba(138, 43, 226, 0.4);
+}
+
+/* ===== PARTICLES BACKGROUND ===== */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: radial-gradient(
+        1px 1px at 20px 30px,
+        var(--accent-cyan),
+        transparent
+    );
+    background-size: 40px 40px;
+    animation: particlesMove 100s linear infinite;
+    opacity: 0.2;
+    z-index: -1;
+}
+
+@keyframes particlesMove {
+    from { background-position: 0 0; }
+    to { background-position: 100% 100%; }
+}
+
+/* ===== CUSTOM SCROLLBARS ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-purple);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* ===== ANIMATIONS ===== */
 @keyframes pulse {
     0% {
@@ -1233,22 +1363,9 @@ button.btn {
     }
 }
 
-/* ===== CUSTOM SCROLLBARS ===== */
-.log-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.log-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.log-content::-webkit-scrollbar-thumb {
-    background: rgba(138, 43, 226, 0.3);
-    border-radius: 4px;
-}
-
-.log-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(138, 43, 226, 0.5);
+@keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    80%, 100% { transform: scale(1.4); opacity: 0; }
 }
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
